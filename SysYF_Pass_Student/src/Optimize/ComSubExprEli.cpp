@@ -86,7 +86,7 @@ void ComSubExprEli::compute_global_in_out(Function *f) {
             if (bb != entry){
                 std::set<Instruction*,cmp_expr> last_tmp;
                 bool is_first = true;
-                for (auto pred: bb->get_pre_basic_blocks()){  //IN[B]=INTERSECT{OUT[P]}
+                for (auto pred: bb->get_pre_basic_blocks()){  //bb_in[B] = intersect{bb_out[P]} for all P->B
                     if (!is_first){
                         std::set<Instruction*,cmp_expr> this_tmp = {};
                         std::insert_iterator<std::set<Instruction*,cmp_expr>> it(this_tmp,this_tmp.begin());
@@ -106,23 +106,22 @@ void ComSubExprEli::compute_global_in_out(Function *f) {
                 */
                 bb_in[bb] = last_tmp;
 
-                // OUT[B] = e_genB union (IN[B]-e_killB)
+                // bb_OUT[B] = bb_gen[B] union (IN[B]-bb_kill[B]), ignore bb_kill[B] because of the SSA form
                 auto old_out_size = bb_out[bb].size();
                 std::set<Instruction*,cmp_expr> tmp2 = {};
                 std::insert_iterator<std::set<Instruction*,cmp_expr>> it(tmp2,tmp2.begin());
                 //std::set_difference(bb_in[bb].begin(),bb_in[bb].end(),bb_kill[bb].begin(),bb_kill[bb].end(),it);
                 //std::set<Instruction*,cmp_expr> tmp3 = {};
                 //std::insert_iterator<std::set<Instruction*,cmp_expr>> it2(tmp3,tmp3.begin());
-                std::set_union(bb_in[bb].begin(),bb_in[bb].end(),bb_gen[bb].begin(),bb_gen[bb].end(),it);
+                std::set_union(bb_in[bb].begin(), bb_in[bb].end(), bb_gen[bb].begin(), bb_gen[bb].end(), it);
                 //std::cerr << "union:\n";
 //                for(auto inst:tmp2){
 //                    std::cerr << inst->print() << std::endl;
 //                }
                 bb_out[bb] = tmp2;
                 auto new_out_size = tmp2.size();
-                if(old_out_size!=new_out_size){
+                if (old_out_size != new_out_size)
                     change = true;
-                }
             }
         }
     }
@@ -161,30 +160,31 @@ void ComSubExprEli::compute_global_common_expr(Function *f) {
     std::set<Instruction*> delete_list = {};
     std::map<Instruction*,Instruction*> replace_map;
     auto all_bbs = f->get_basic_blocks();
-    for(auto bb:all_bbs){
-        //std::cerr << "cur bb:"<< bb->get_name() <<std::endl;
-
+    for (auto bb: all_bbs){
+        //std::cerr << "cur bb:"<< bb->get_name() << std::endl;
         auto instrs = bb->get_instructions();
-        for(auto instr : instrs) {
+        for (auto instr : instrs) {
             if (is_valid_expr(instr)) {
                 auto common_exp = bb_in[bb].find(instr);
                 if (common_exp != bb_in[bb].end()) {
-                    if(*common_exp!=instr){
+                    if (*common_exp != instr){
                         //std::cerr << "global replace " <<instr->print() << " with "<<(*common_exp)->print() << std::endl;
                         //instr->replace_all_use_with(*common_exp);
                         replace_map[instr] = *common_exp;
                         delete_list.insert(instr);
                     }
-//                instr_iter = instrs.erase(instr_iter);
-//                instr_iter --;
-//                instr->remove_use_of_ops();
+                    /*
+                    instr_iter = instrs.erase(instr_iter);
+                    instr_iter --;
+                    instr->remove_use_of_ops();
+                    */
                 }
             }
         }
     }
-    for(auto inst : delete_list){
+    for (auto inst : delete_list){
         auto common_exp = replace_map[inst];
-        while(replace_map.find(common_exp)!=replace_map.end()){
+        while (replace_map.find(common_exp)!=replace_map.end()){
             common_exp = replace_map[common_exp];
         }
         inst->replace_all_use_with(common_exp);

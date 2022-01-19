@@ -67,10 +67,7 @@ public:
 private:
     const std::string name = "ComSubExprEli";
     std::set<Instruction*,cmp_expr> U;
-    std::map<BasicBlock*,std::set<Instruction*,cmp_expr>> bb_in;
-    std::map<BasicBlock*,std::set<Instruction*,cmp_expr>> bb_out;
-    std::map<BasicBlock*,std::set<Instruction*,cmp_expr>> bb_gen;
-    std::map<BasicBlock*,std::set<Instruction*,cmp_expr>> bb_kill;
+    std::map<BasicBlock*,std::set<Instruction*,cmp_expr>> bb_in, bb_out, bb_gen, bb_kill;
 };
 
 #endif // SYSYF_COMSUBEXPRELI_H

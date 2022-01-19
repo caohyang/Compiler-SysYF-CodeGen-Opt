@@ -15,8 +15,8 @@ void ActiveVar::execute() {
 
       get_in_out();
       for (auto bb : func_->get_basic_blocks()) {
-        bb->set_def_var(def[bb]);
-        bb->set_use_var(use[bb]);
+        //bb->set_def_var(def[bb]);
+        //bb->set_use_var(use[bb]);
 
         bb->set_live_in(live_in[bb]);
         bb->set_live_out(live_out[bb]);

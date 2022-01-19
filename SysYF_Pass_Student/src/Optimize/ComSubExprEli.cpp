@@ -32,7 +32,7 @@ void ComSubExprEli::initial_map(Function *f) {
 void ComSubExprEli::compute_local_gen(Function *f) {
     //std::cerr << "local expr\n";
     for (auto bb: f->get_basic_blocks()){
-        std::cerr << bb->get_name() << std::endl;
+        //std::cerr << bb->get_name() << std::endl;
         std::vector<Instruction*> delete_list = {};  // instructions to be deleted
         auto instrs = bb->get_instructions();  //instructions in function f
         for (auto instr: instrs){
@@ -130,20 +130,17 @@ void ComSubExprEli::compute_global_common_expr(Function *f) {
             if (is_valid_expr(instr)) {
                 auto common_exp = bb_in[bb].find(instr);
                 if (common_exp != bb_in[bb].end()) {
-                    if (*common_exp != instr){
-                        //instr->replace_all_use_with(*common_exp);
-                        replace_map[instr] = *common_exp;
-                        delete_list.insert(instr);
-                    }
+                    instr->replace_all_use_with(*common_exp);
+                    replace_map[instr] = *common_exp;
+                    delete_list.insert(instr);
                 }
             }
         }
     }
     for (auto inst : delete_list){
         auto common_exp = replace_map[inst];
-        while (replace_map.find(common_exp)!=replace_map.end()){
+        while (replace_map.find(common_exp) != replace_map.end())
             common_exp = replace_map[common_exp];
-        }
         inst->replace_all_use_with(common_exp);
         inst->get_parent()->delete_instr(inst);
     }

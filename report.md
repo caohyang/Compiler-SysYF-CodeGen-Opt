@@ -22,7 +22,27 @@ PB19000372  孙杰（必做Part3，选做1的两项任务；贡献度50%）
 
 #### B2-1
 
+use和def的求解较为简单。
 
+1. 由于以基于SSA形式的CFG进行分析，所以所有分析的指令都是SSA的。因此，对于def，我们只要把所有的非空指令存储即可。见ActiveVar::get_def()
+2. 而对于use，由于指令是SSA的，因此不可能出现i=i+1的情况，所以只需要把每条指令的所有operand加入use并且剔除def中的内容即可。见ActiveVar::get_use()
+
+活跃变量分析的主要难点在于phi的引入。为此，我们需要修改迭代公式。
+$$
+IN = use\bigcup phi \bigcup(OUT-def)\\
+OUT = \bigcup_{suc}(IN[suc]-phi^*[suc])
+$$
+其中$phi^*$表示suc的phi指令中不从该节点分支进入suc且在其他地方不需要的变量集合。
+
+这部分最主要的工作就在于$phi^*$的计算：
+
+1. 找到所有suc中phi命令里面不从当前节点分支继承的变量，记录为集合$phi_0$
+
+2. 顺着这些变量的使用链(Value::get_use_list)找到所有的使用该变量的在suc中(Instruction::get_parent())指令
+
+3. 如果该指令不是phi指令，则必然从当前节点继承，否则根据phi指令的分支判断变量是否从当前节点继承
+
+4. 最终把所有从当前节点继承的从$phi_0$删除得到$phi^*$
 
 ### 必做 Part3：支配树算法
 

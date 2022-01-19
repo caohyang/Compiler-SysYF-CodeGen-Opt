@@ -38,7 +38,7 @@ use和def的求解较为简单。
 2. 而对于use，由于指令是SSA的，因此不可能出现i=i+1的情况，所以只需要把每条指令的所有operand加入use并且剔除def中的内容即可。见ActiveVar::get_use()
 
 活跃变量分析的主要难点在于phi的引入。为此，我们需要修改迭代公式。
-$$IN = use\bigcup phi \bigcup(OUT-def)\\ OUT = \bigcup_{suc}(IN[suc]-phi^*[suc])$$
+$$IN = use\bigcup phi \bigcup(OUT-def)\\ OUT = \bigcup_{suc}(IN[suc]-phi^{*}[suc])$$
 其中$phi^*$表示suc的phi指令中不从该节点分支进入suc且在其他地方不需要的变量集合。
 
 这部分最主要的工作就在于$phi^*$的计算：

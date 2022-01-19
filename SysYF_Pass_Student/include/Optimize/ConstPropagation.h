@@ -15,9 +15,9 @@ class ConstFolder
 {
 public:
     ConstFolder(Module *module) : module_(module) {}
-
+    ConstantInt *compute_zext(Instruction::OpID op, ConstantInt *value1);
     ConstantInt *compute(Instruction::OpID op, ConstantInt *value1, ConstantInt *value2);
-    // ...
+    ConstantInt *compute(CmpInst::CmpOp op, ConstantInt *value1, ConstantInt *value2);
 private:
     Module *module_;
 };
@@ -25,11 +25,26 @@ private:
 class ConstPropagation : public Pass
 {
 private:
-    const std::string name = "ConstPropagation";
+    BasicBlock *bb_;
+    IRStmtBuilder *builder;
+    ConstFolder * folder;
+    std::map<Value*, ConstantInt*> const_global_var;
+    std::map<Value*, std::map<unsigned int, ConstantInt*>> const_array;
+    std::string name = "ConstPropagation";
 
 public:
-    ConstPropagation(Module *module) : Pass(module) {}
+    ConstPropagation(Module *module) : Pass(module) {
+        folder = new ConstFolder(module);
+        builder = new IRStmtBuilder(nullptr, module);
+    }
+    ~ConstPropagation() { delete folder; }
+
     void execute() final;
+    void const_propagation();
+    void reduce_redundant_cond_br();
+
+    ConstantInt *get_global_const_val(Value *value);
+    void set_global_const_val(Value *value, ConstantInt *const_val);
     const std::string get_name() const override {return name;}
 };
 

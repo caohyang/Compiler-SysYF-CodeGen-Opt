@@ -25,7 +25,7 @@ private:
 
 public:
     explicit CFG_analyse(Module* module): Pass(module){}
-    void execute() final;
+    void execute(){}
     void incoming_find(Function* func);
     void incoming_DFS(BasicBlock* BB);
     void loop_find(Function* func);
